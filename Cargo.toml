@@ -16,4 +16,4 @@ unaccent = "0.1.1"
 [dependencies.iced]
 version = "0.14.0"
 default-features = false
-features = ["tiny-skia", "crisp", "hinting", "web-colors", "thread-pool", "linux-theme-detection", "x11", "wayland"]
+features = ["tiny-skia", "crisp", "web-colors", "thread-pool", "linux-theme-detection", "x11", "wayland"]
