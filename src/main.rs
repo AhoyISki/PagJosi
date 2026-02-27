@@ -85,7 +85,7 @@ impl Application {
                 self.is_picking_file = false;
                 Task::none()
             }
-            Message::ConfirmedRepassAddition => {
+            Message::StartRepassAddition => {
                 self.began_processing = true;
 
                 let parts = match ProcessParts::new(
@@ -124,7 +124,9 @@ impl Application {
 
                 let combo_state = combo_box::State::with_selection(
                     options,
-                    associations.get(&condo_name).map(|(sheet, _)| sheet),
+                    associations
+                        .get(&condo_name)
+                        .and_then(|assoc| assoc.as_ref().map(|(sheet, _)| sheet)),
                 );
 
                 self.assoc_request = Some(AssocRequest {
@@ -153,10 +155,17 @@ impl Application {
                 }
 
                 if let Some(obs) = obs {
-                    associations.insert(obs, (assoc_sheet.clone(), condo_name.clone()));
+                    associations.insert(obs, Some((assoc_sheet.clone(), condo_name.clone())));
                 }
-                associations.insert(condo_name.clone(), (assoc_sheet, condo_name));
+                associations.insert(condo_name.clone(), Some((assoc_sheet, condo_name)));
 
+                Task::perform(process_csvs(request.parts), handle_result)
+            }
+            Message::SkipAssoc(skipped) => {
+                let mut associations = ASSOCIATIONS.lock().unwrap();
+                associations.insert(skipped, None);
+
+                let request = self.assoc_request.take().unwrap();
                 Task::perform(process_csvs(request.parts), handle_result)
             }
             Message::SetAssocSheet(assoc_sheet) => {
@@ -238,7 +247,7 @@ impl Application {
                             && self.files.contains_key("Financeiro")
                             && self.files.contains_key("Repasses")
                         {
-                            Some(Message::ConfirmedRepassAddition)
+                            Some(Message::StartRepassAddition)
                         } else {
                             None
                         },
@@ -294,7 +303,8 @@ impl Application {
                                      associar a esse condomínio.\nEste pode ser o nome de uma \
                                      nova aba. Se for o caso, esta será adicionada as abas no \
                                      arquivo de repasses."
-                                )),
+                                ))
+                                .width(Length::Fill),
                                 combo_box(
                                     &request.combo_state,
                                     &format!(
@@ -302,18 +312,25 @@ impl Application {
                                          \"70 - {condo_name}\")",
                                     ),
                                     None,
-                                    move |assoc_sheet| {
-                                        Message::ConfirmSheetAssoc(
-                                            None,
-                                            assoc_sheet,
-                                            condo_name.clone(),
-                                        )
+                                    {
+                                        let condo_name = condo_name.clone();
+                                        move |assoc_sheet| {
+                                            Message::ConfirmSheetAssoc(
+                                                None,
+                                                assoc_sheet,
+                                                condo_name.clone(),
+                                            )
+                                        }
                                     }
                                 )
                                 .on_input(Message::SetAssocSheet),
+                                button("Pular")
+                                    .style(button_style())
+                                    .height(32.0)
+                                    .on_press(Message::SkipAssoc(condo_name)),
                             ]
                             .spacing(10.0)
-                            .padding(10.0)
+                            .align_x(Alignment::End)
                         }
                         AssocRequestReason::NewCondo(obs) => {
                             let condo_name = request.condo_name.clone();
@@ -328,7 +345,8 @@ impl Application {
                                      este condomínio já foi escolhido ({condo_name}), mas se \
                                      quiser, pode altera-lo se estiver incorreto. (e.g. trocar \
                                      \"TARRAF VIVA VOTUPORANGA\" por \"TARRAF VIVA\")"
-                                )),
+                                ))
+                                .width(Length::Fill),
                                 text_input(&condo_name, &condo_name)
                                     .on_submit_maybe(request.assoc_sheet.as_ref().map(
                                         |assoc_sheet| Message::ConfirmSheetAssoc(
@@ -347,16 +365,25 @@ impl Application {
                                          {condo_name}\")",
                                     ),
                                     None,
-                                    move |assoc_sheet| Message::ConfirmSheetAssoc(
-                                        Some(obs.clone()),
-                                        assoc_sheet,
-                                        condo_name.clone(),
-                                    )
+                                    {
+                                        let obs = obs.clone();
+                                        move |assoc_sheet| {
+                                            Message::ConfirmSheetAssoc(
+                                                Some(obs.clone()),
+                                                assoc_sheet,
+                                                condo_name.clone(),
+                                            )
+                                        }
+                                    }
                                 )
                                 .on_input(Message::SetAssocSheet),
+                                button("Pular")
+                                    .style(button_style())
+                                    .height(32.0)
+                                    .on_press(Message::SkipAssoc(obs))
                             ]
                             .spacing(10.0)
-                            .padding(10.0)
+                            .align_x(Alignment::End)
                         }
                     })
                     .width(Length::Fill)
@@ -383,11 +410,12 @@ impl Application {
 enum Message {
     FilePicked(&'static str, Option<FileHandle>),
     PickFile(&'static str, &'static str),
-    ConfirmedRepassAddition,
+    StartRepassAddition,
     Result(Result<(), Arc<dyn std::error::Error + Send + Sync>>),
     SheetAssocRequested(Arc<Mutex<Option<ProcessParts>>>, AssocRequestReason),
-    ConfirmSheetAssoc(Option<String>, String, String),
+    SkipAssoc(String),
     SetAssocSheet(String),
+    ConfirmSheetAssoc(Option<String>, String, String),
     SetCondoName(String),
 }
 
@@ -550,11 +578,14 @@ fn add_to_sheet(
     }
 
     let (sheet, name) = if name == "NOVO CONDOMINIO" {
-        if let Some((assoc_sheet, condo_name)) = associations.get(&first_rec[OBSERVACAO_VEN]) {
-            (
-                spreadsheet.get_sheet_by_name_mut(assoc_sheet).unwrap(),
-                condo_name.as_str(),
-            )
+        if let Some(associated) = associations.get(&first_rec[OBSERVACAO_VEN]) {
+            match associated {
+                Some((assoc_sheet, condo_name)) => (
+                    spreadsheet.get_sheet_by_name_mut(assoc_sheet).unwrap(),
+                    condo_name.as_str(),
+                ),
+                None => return Ok(None),
+            }
         } else {
             return Ok(Some(AssocRequestReason::NewCondo(
                 first_rec[OBSERVACAO_VEN].to_string(),
@@ -565,8 +596,11 @@ fn add_to_sheet(
             .get_sheet_collection_no_check()
             .iter()
             .position(|sheet| {
-                let name = if let Some((assoc_name, _)) = associations.get(name) {
-                    assoc_name.as_ref()
+                let name = if let Some(associated) = associations.get(name) {
+                    match associated {
+                        Some((assoc_name, _)) => assoc_name.as_ref(),
+                        None => return false,
+                    }
                 } else {
                     name
                 };
@@ -579,7 +613,11 @@ fn add_to_sheet(
         {
             Some(sheet) => (sheet, name),
             None => {
-                return Ok(Some(AssocRequestReason::NotFound(name.to_string())));
+                if let Some(None) = associations.get(name) {
+                    return Ok(None);
+                } else {
+                    return Ok(Some(AssocRequestReason::NotFound(name.to_string())));
+                }
             }
         }
     };
@@ -803,8 +841,7 @@ enum AssocRequestReason {
     NewCondo(String),
 }
 
-static ASSOCIATIONS: LazyLock<Mutex<HashMap<String, (String, String)>>> =
-    LazyLock::new(Mutex::default);
+static ASSOCIATIONS: LazyLock<Mutex<Associations>> = LazyLock::new(Mutex::default);
 
 const OBSERVACOES_FIN: usize = 5;
 const VALOR_FIN: usize = 3;
@@ -817,3 +854,4 @@ const DETALHAMENTO_VEN: usize = 5;
 const VALOR_TOTAL_VEN: usize = 6;
 
 type Rec = Result<StringRecord, csv::Error>;
+type Associations = HashMap<String, Option<(String, String)>>;
