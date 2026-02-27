@@ -289,17 +289,17 @@ impl Application {
 
                             column![
                                 text(format!(
-                                    "Não foi encontrada uma tabela de repasses que bate com o \
-                                     condomínio \"{condo_name}\". Escolha um nome de uma tabela \
-                                     para associar a esse condomínio.\nEste pode ser o nome de \
-                                     uma nova tabela. Se for o caso, esta será adicionada as \
-                                     tabelas no arquivo de repasses."
+                                    "Não foi encontrada uma aba de repasses que bate com o \
+                                     condomínio \"{condo_name}\". Escolha um nome de uma aba para \
+                                     associar a esse condomínio.\nEste pode ser o nome de uma \
+                                     nova aba. Se for o caso, esta será adicionada as abas no \
+                                     arquivo de repasses."
                                 )),
                                 combo_box(
                                     &request.combo_state,
                                     &format!(
-                                        "Escolha um nome para a nova aba (e.g. \"70 - \
-                                         {condo_name}\")",
+                                        "Escolha um nome para uma aba nova ou já existente (e.g. \
+                                         \"70 - {condo_name}\")",
                                     ),
                                     None,
                                     move |assoc_sheet| {
@@ -310,7 +310,7 @@ impl Application {
                                         )
                                     }
                                 )
-                                .on_input(Message::SetAssocSheet)
+                                .on_input(Message::SetAssocSheet),
                             ]
                             .spacing(10.0)
                             .padding(10.0)
@@ -321,10 +321,13 @@ impl Application {
 
                             column![
                                 text(format!(
-                                    "Foi encontrado um novo condomínio com a \
-                                     descrição:\n\"{obs}\".\n Você deve decidir um nome para a \
-                                     tabela de repasses e qual será o nome desse condomínio nesta \
-                                     tabela."
+                                    "Foi encontrado um novo condomínio (descrição é \"NOVO \
+                                     CONDOMINIO\") com a observação:\n\"{obs}\".\n Você deve \
+                                     decidir um nome para a aba de repasses e qual será o nome \
+                                     desse condomínio na tabela dentro desta aba.\nUm nome para \
+                                     este condomínio já foi escolhido ({condo_name}), mas se \
+                                     quiser, pode altera-lo se estiver incorreto. (e.g. trocar \
+                                     \"TARRAF VIVA VOTUPORANGA\" por \"TARRAF VIVA\")"
                                 )),
                                 text_input(&condo_name, &condo_name)
                                     .on_submit_maybe(request.assoc_sheet.as_ref().map(
