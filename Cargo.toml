@@ -1,0 +1,15 @@
+[package]
+name = "pagjosi"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+chrono = "0.4.43"
+csv = "1.4.0"
+iced = "0.14.0"
+iced_aw = "0.13.1"
+ndarray = "0.17.2"
+regex = "1.12.3"
+rfd = "0.17.2"
+umya-spreadsheet = "2.3.3"
+unaccent = "0.1.1"
