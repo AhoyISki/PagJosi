@@ -146,7 +146,7 @@ impl Application {
             Message::ConfirmSheetAssoc(obs, assoc_sheet, condo_name) => {
                 let mut associations = ASSOCIATIONS.lock().unwrap();
                 let mut request = self.assoc_request.take().unwrap();
-                let condo_name = condo_name.trim();
+                let condo_name = condo_name.trim().to_string();
 
                 // "mut" to prevent a stupid panic.
                 if request
