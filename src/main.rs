@@ -37,6 +37,9 @@ macro_rules! main_container {
 }
 
 fn main() {
+    unsafe {
+        std::env::set_var("WGPU_BACKEND","gl");
+    }
     _ = iced::application(Application::default, Application::update, Application::view)
         .theme(Theme::CatppuccinLatte)
         .run();
