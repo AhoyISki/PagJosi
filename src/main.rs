@@ -146,6 +146,7 @@ impl Application {
             Message::ConfirmSheetAssoc(obs, assoc_sheet, condo_name) => {
                 let mut associations = ASSOCIATIONS.lock().unwrap();
                 let mut request = self.assoc_request.take().unwrap();
+                let condo_name = condo_name.trim();
 
                 // "mut" to prevent a stupid panic.
                 if request
@@ -359,9 +360,7 @@ impl Application {
                                             condo_name.clone(),
                                         )
                                     ))
-                                    .on_input(|input| Message::SetCondoName(
-                                        input.trim().to_string()
-                                    )),
+                                    .on_input(Message::SetCondoName),
                                 combo_box(
                                     &request.combo_state,
                                     &format!(
