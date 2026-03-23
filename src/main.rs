@@ -743,6 +743,8 @@ fn add_to_sheet(
     };
 
     sheet.insert_new_row(&3, &(records.len() as u32));
+        
+    sheet.set_style_by_range(format!("B3:I{}", 2 + records.len()).as_str(), base_style);
 
     for (i, record) in records.iter().enumerate() {
         let details = &record[DETALHAMENTO_VEN];
@@ -792,8 +794,7 @@ fn add_to_sheet(
         .set_formula(format!("SUM(H3:H{})", 2 + values_count))
         .get_style_mut()
         .set_number_format(BRL_FMT.clone());
-    
-    sheet.set_style_by_range(format!("B3:I{}", 2 + records.len()).as_str(), base_style);
+
 
     let alignment = sheet.get_style_mut("E3").get_alignment_mut();
     alignment.set_wrap_text(true);
