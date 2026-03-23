@@ -849,7 +849,7 @@ enum AssocRequestReason {
 static ASSOCIATIONS: LazyLock<Mutex<Associations>> = LazyLock::new(Mutex::default);
 static BRL_FMT: LazyLock<NumberingFormat> = LazyLock::new(|| {
     let mut num_fmt = NumberingFormat::default();
-    num_fmt.set_format_code(r#"_-"R$"* #,##0.00_-;\-"R$"* #,##0.00_-;_-"R$"* "-"??_-;_-@"#);
+    num_fmt.set_format_code(r#"_("R$"* #,##0.00_);_("R$"* \(#,##0.00\);_("R$"* "-"??_);_(@_)"#);
     num_fmt
 });
 
