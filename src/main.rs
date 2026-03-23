@@ -15,7 +15,8 @@ use iced::{
 use regex::Regex;
 use rfd::{AsyncFileDialog, FileHandle};
 use umya_spreadsheet::{
-    BorderStyleValues, Color, Font, Spreadsheet, Style, VerticalAlignmentValues,
+    BorderStyleValues, Color, Font, NumberingFormat, Spreadsheet, Style,
+    VerticalAlignmentValues,
 };
 use unaccent::unaccent;
 
@@ -680,7 +681,7 @@ fn add_to_sheet(
             sheet.add_merge_cells("C1:E1");
             sheet.add_merge_cells("F1:H1");
 
-            let date = chrono::Local::now().format("%m/%d/%Y").to_string();
+            let date = chrono::Local::now().format("%d/%m/%Y").to_string();
 
             for (cell, value) in [("A1", "DATA DO REPASSE:"), ("C1", &date), ("F1", &key)] {
                 sheet
@@ -753,7 +754,9 @@ fn add_to_sheet(
             .set_value_string(details);
         sheet
             .get_cell_mut(format!("G{}", i + 3).as_str())
-            .set_value_number(round(paid_portion));
+            .set_value_number(round(paid_portion))
+            .get_style_mut()
+            .set_number_format(BRL_FMT.clone());
     }
 
     let record = &records[0];
@@ -774,21 +777,22 @@ fn add_to_sheet(
 
     sheet
         .get_cell_mut(format!("H{}", 2 + records.len()))
-        .set_value_number(round(paid_amount));
+        .set_value_number(round(paid_amount))
+        .get_style_mut()
+        .set_number_format(BRL_FMT.clone());
 
     sheet
         .get_cell_mut(format!("G{}", 3 + values_count).as_ref())
-        .set_formula(format!("SUM(G3:G{})", 2 + values_count));
+        .set_formula(format!("SUM(G3:G{})", 2 + values_count))
+        .get_style_mut()
+        .set_number_format(BRL_FMT.clone());
+
     sheet
         .get_cell_mut(format!("H{}", 3 + values_count).as_ref())
-        .set_formula(format!("SUM(H3:H{})", 2 + values_count));
-
-    sheet.set_style_by_range(format!("A3:A{}", 2 + records.len()).as_str(), {
-        let mut style = base_style.clone();
-        style.set_background_color("9bbb59");
-        style
-    });
-
+        .set_formula(format!("SUM(H3:H{})", 2 + values_count))
+        .get_style_mut()
+        .set_number_format(BRL_FMT.clone());
+    
     sheet.set_style_by_range(format!("B3:I{}", 2 + records.len()).as_str(), base_style);
 
     let alignment = sheet.get_style_mut("E3").get_alignment_mut();
@@ -842,6 +846,11 @@ enum AssocRequestReason {
 }
 
 static ASSOCIATIONS: LazyLock<Mutex<Associations>> = LazyLock::new(Mutex::default);
+static BRL_FMT: LazyLock<NumberingFormat> = LazyLock::new(|| {
+    let mut num_fmt = NumberingFormat::default();
+    num_fmt.set_format_code(r#"_-"R$"* #,##0.00_-;\-"R$"* #,##0.00_-;_-"R$"* "-"??_-;_-@"#);
+    num_fmt
+});
 
 const OBSERVACOES_FIN: usize = 5;
 const VALOR_FIN: usize = 3;
