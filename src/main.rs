@@ -744,7 +744,7 @@ fn add_to_sheet(
 
     sheet.insert_new_row(&3, &(records.len() as u32));
         
-    sheet.set_style_by_range(format!("B3:I{}", 2 + records.len()).as_str(), base_style);
+    sheet.set_style_by_range(format!("A3:I{}", 2 + records.len()).as_str(), base_style);
 
     for (i, record) in records.iter().enumerate() {
         let details = &record[DETALHAMENTO_VEN];
