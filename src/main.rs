@@ -774,7 +774,7 @@ fn add_to_sheet(
         ("D3", SITUACAO_VEN),
         ("E3", OBSERVACAO_VEN),
     ] {
-        sheet.get_cell_mut(cell).set_value(&record[index]);
+        sheet.get_cell_mut(cell).set_value(&record[index].to_uppercase());
     }
 
     sheet
