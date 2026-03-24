@@ -753,7 +753,7 @@ fn add_to_sheet(
 
         sheet
             .get_cell_mut(format!("F{}", i + 3).as_str())
-            .set_value_string(details);
+            .set_value_string(details.to_uppercase());
         sheet
             .get_cell_mut(format!("G{}", i + 3).as_str())
             .set_value_number(round(paid_portion))
