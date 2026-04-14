@@ -3,7 +3,7 @@ use std::{
     collections::HashMap,
     num::ParseFloatError,
     path::{Path, PathBuf},
-    sync::{Arc, LazyLock, Mutex},
+    sync::{Arc, LazyLock, Mutex, OnceLock},
 };
 
 use csv::{StringRecord, StringRecordsIntoIter};
@@ -553,6 +553,8 @@ fn add_to_sheet(
     }
 
     static ALREADY_ADDED: LazyLock<Mutex<HashMap<String, usize>>> = LazyLock::new(Mutex::default);
+    static TOT_REPASSES_IDX: OnceLock<usize> = OnceLock::new();
+
     let Some(first_rec) = records.first() else {
         return Ok(None);
     };
@@ -626,6 +628,7 @@ fn add_to_sheet(
     // Add a new table in case this is the first time a certain sheet is
     // used.
     let mut already_added = ALREADY_ADDED.lock().unwrap();
+    let mut rows_inserted = records.len() as u32;
 
     let base_style = {
         let mut border = umya_spreadsheet::Border::default();
@@ -652,6 +655,7 @@ fn add_to_sheet(
             *values_count
         } else {
             sheet.insert_new_row(&0, &6);
+            rows_inserted += 6;
 
             let header_style = {
                 let mut style = base_style.clone();
@@ -799,6 +803,19 @@ fn add_to_sheet(
     let alignment = sheet.get_style_mut("E3").get_alignment_mut();
     alignment.set_wrap_text(true);
     alignment.set_vertical(VerticalAlignmentValues::Top);
+
+    // Adjustment in TOTAL REPASSES
+    let changed_sheet_name = sheet.get_name().to_string();
+    let tot_repasses_idx = TOT_REPASSES_IDX.get_or_init(|| {
+        spreadsheet
+            .get_sheet_collection_no_check()
+            .iter()
+            .position(|sheet| sheet.get_name() == "TOTAL REPASSE")
+            .unwrap()
+    });
+
+    let repasses = spreadsheet.get_sheet_mut(tot_repasses_idx).unwrap();
+    repasses.insert_new_row_from_other_sheet(&changed_sheet_name, &0, &rows_inserted);
 
     Ok(None)
 }
