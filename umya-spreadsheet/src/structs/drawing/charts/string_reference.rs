@@ -1,0 +1,84 @@
+use crate::xml_read_loop;
+
+// c:strRef
+use super::Formula;
+use super::StringCache;
+use crate::structs::Spreadsheet;
+use crate::writer::driver::*;
+use quick_xml::events::{BytesStart, Event};
+use quick_xml::Reader;
+use quick_xml::Writer;
+use std::io::Cursor;
+
+#[derive(Clone, Default, Debug)]
+pub struct StringReference {
+    formula: Formula,
+    string_cache: StringCache,
+}
+
+impl StringReference {
+    pub fn get_formula(&self) -> &Formula {
+        &self.formula
+    }
+
+    pub fn get_formula_mut(&mut self) -> &mut Formula {
+        &mut self.formula
+    }
+
+    pub fn set_formula(&mut self, value: Formula) -> &mut StringReference {
+        self.formula = value;
+        self
+    }
+
+    pub fn get_string_cache(&self) -> &StringCache {
+        &self.string_cache
+    }
+
+    pub fn get_string_cache_mut(&mut self) -> &mut StringCache {
+        &mut self.string_cache
+    }
+
+    pub fn set_string_cache(&mut self, value: StringCache) -> &mut StringReference {
+        self.string_cache = value;
+        self
+    }
+
+    pub(crate) fn set_attributes<R: std::io::BufRead>(
+        &mut self,
+        reader: &mut Reader<R>,
+        _e: &BytesStart,
+    ) {
+        xml_read_loop!(
+            reader,
+            Event::Start(ref e) => match e.name().0 {
+                b"c:f" => {
+                    self.formula.set_attributes(reader, e);
+                }
+                b"c:strCache" => {
+                    self.string_cache.set_attributes(reader, e);
+                }
+                _ => (),
+            },
+            Event::End(ref e) => {
+                if e.name().0 == b"c:strRef" {
+                    return;
+                }
+            },
+            Event::Eof => panic!("Error: Could not find {} end element", "c:strRef"),
+        );
+    }
+
+    pub(crate) fn write_to(&self, writer: &mut Writer<Cursor<Vec<u8>>>, spreadsheet: &Spreadsheet) {
+        // c:strRef
+        write_start_tag(writer, "c:strRef", vec![], false);
+
+        // c:f
+        self.formula.write_to(writer);
+
+        // c:strCache
+        self.string_cache
+            .write_to(writer, self.get_formula(), spreadsheet);
+
+        write_end_tag(writer, "c:strRef");
+    }
+}

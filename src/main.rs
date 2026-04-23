@@ -15,8 +15,7 @@ use iced::{
 use regex::Regex;
 use rfd::{AsyncFileDialog, FileHandle};
 use umya_spreadsheet::{
-    BorderStyleValues, Color, Font, NumberingFormat, Spreadsheet, Style,
-    VerticalAlignmentValues,
+    BorderStyleValues, Color, Font, NumberingFormat, Spreadsheet, Style, VerticalAlignmentValues,
 };
 use unaccent::unaccent;
 
@@ -479,10 +478,12 @@ async fn process_csvs<I: Iterator<Item = Rec> + Send + Sync + 'static>(
                     .filter(|sale_id| *sale_id == prev_id)
                     .and_then(|_| parse_num(&record[VALOR_FIN]).ok())
             }) {
+                let honorarios_value = honorarios.as_ref().map(|(val, _)| *val).unwrap_or(0.0);
+
                 match add_to_sheet(
                     &mut parts.spreadsheet,
-                    paid_amount - honorarios.unwrap_or(0.0) * (paid_amount / total_value_sum),
-                    total_value_sum - honorarios.unwrap_or(0.0),
+                    paid_amount - honorarios_value * (paid_amount / total_value_sum),
+                    total_value_sum - honorarios_value,
                     &relevant_records,
                 ) {
                     Ok(Some(reason)) => {
@@ -493,6 +494,7 @@ async fn process_csvs<I: Iterator<Item = Rec> + Send + Sync + 'static>(
                                 vendas: Box::new(
                                     relevant_records
                                         .into_iter()
+                                        .chain(honorarios.map(|(_, rec)| rec))
                                         .chain([record])
                                         .map(Ok)
                                         .chain(parts.vendas),
@@ -514,7 +516,7 @@ async fn process_csvs<I: Iterator<Item = Rec> + Send + Sync + 'static>(
                 .to_uppercase()
                 .starts_with("HONORARIOS")
             {
-                honorarios = Some(parse_num(&record[VALOR_TOTAL_VEN])?);
+                honorarios = Some((parse_num(&record[VALOR_TOTAL_VEN])?, record));
             } else {
                 if let Some(prev_id) = prev_id
                     && prev_id != sale_id
@@ -735,8 +737,12 @@ fn add_to_sheet(
                     .set_style(complement_style.clone());
             }
 
-            for cell in ["G3", "H3", "H4"] {
-                sheet.get_cell_mut(cell).set_style(complement_style.clone());
+            for cell in ["G3", "H3", "H4", "H5"] {
+                sheet
+                    .get_cell_mut(cell)
+                    .set_style(complement_style.clone())
+                    .get_style_mut()
+                    .set_number_format(BRL_FMT.clone());
             }
 
             *already_added
@@ -747,8 +753,8 @@ fn add_to_sheet(
     };
 
     sheet.insert_new_row(&3, &(records.len() as u32));
-        
-    sheet.set_style_by_range(format!("A3:I{}", 2 + records.len()).as_str(), base_style);
+
+    sheet.set_style_by_range(format!("A3:H{}", 2 + records.len()).as_str(), base_style);
 
     for (i, record) in records.iter().enumerate() {
         let details = &record[DETALHAMENTO_VEN];
@@ -778,7 +784,9 @@ fn add_to_sheet(
         ("D3", SITUACAO_VEN),
         ("E3", OBSERVACAO_VEN),
     ] {
-        sheet.get_cell_mut(cell).set_value(&record[index].to_uppercase());
+        sheet
+            .get_cell_mut(cell)
+            .set_value(record[index].to_uppercase());
     }
 
     sheet
@@ -798,7 +806,6 @@ fn add_to_sheet(
         .set_formula(format!("SUM(H3:H{})", 2 + values_count))
         .get_style_mut()
         .set_number_format(BRL_FMT.clone());
-
 
     let alignment = sheet.get_style_mut("E3").get_alignment_mut();
     alignment.set_wrap_text(true);

@@ -1,0 +1,399 @@
+// border
+use super::BooleanValue;
+use super::Border;
+use crate::reader::driver::*;
+use crate::writer::driver::*;
+use md5::Digest;
+use quick_xml::events::{BytesStart, Event};
+use quick_xml::Reader;
+use quick_xml::Writer;
+use std::io::Cursor;
+
+#[derive(Default, Debug, Clone, PartialEq, PartialOrd)]
+pub struct Borders {
+    left_border: Border,
+    right_border: Border,
+    top_border: Border,
+    bottom_border: Border,
+    diagonal_border: Border,
+    vertical_border: Border,
+    horizontal_border: Border,
+    diagonal_down: BooleanValue,
+    diagonal_up: BooleanValue,
+}
+
+impl Borders {
+    // Border style
+    pub const BORDER_NONE: &'static str = "none";
+    pub const BORDER_DASHDOT: &'static str = "dashDot";
+    pub const BORDER_DASHDOTDOT: &'static str = "dashDotDot";
+    pub const BORDER_DASHED: &'static str = "dashed";
+    pub const BORDER_DOTTED: &'static str = "dotted";
+    pub const BORDER_DOUBLE: &'static str = "double";
+    pub const BORDER_HAIR: &'static str = "hair";
+    pub const BORDER_MEDIUM: &'static str = "medium";
+    pub const BORDER_MEDIUMDASHDOT: &'static str = "mediumDashDot";
+    pub const BORDER_MEDIUMDASHDOTDOT: &'static str = "mediumDashDotDot";
+    pub const BORDER_MEDIUMDASHED: &'static str = "mediumDashed";
+    pub const BORDER_SLANTDASHDOT: &'static str = "slantDashDot";
+    pub const BORDER_THICK: &'static str = "thick";
+    pub const BORDER_THIN: &'static str = "thin";
+
+    #[inline]
+    pub fn get_left_border(&self) -> &Border {
+        &self.left_border
+    }
+
+    #[inline]
+    pub fn get_left_border_mut(&mut self) -> &mut Border {
+        &mut self.left_border
+    }
+
+    #[inline]
+    pub fn set_left_border(&mut self, value: Border) -> &mut Self {
+        self.left_border = value;
+        self
+    }
+
+    #[inline]
+    pub fn get_left(&self) -> &Border {
+        &self.left_border
+    }
+
+    #[inline]
+    pub fn get_left_mut(&mut self) -> &mut Border {
+        &mut self.left_border
+    }
+
+    #[inline]
+    pub fn set_left(&mut self, value: Border) -> &mut Self {
+        self.left_border = value;
+        self
+    }
+
+    #[inline]
+    pub fn get_right_border(&self) -> &Border {
+        &self.right_border
+    }
+
+    #[inline]
+    pub fn get_right_border_mut(&mut self) -> &mut Border {
+        &mut self.right_border
+    }
+
+    #[inline]
+    pub fn set_right_border(&mut self, value: Border) -> &mut Self {
+        self.right_border = value;
+        self
+    }
+
+    #[inline]
+    pub fn get_right(&self) -> &Border {
+        &self.right_border
+    }
+
+    #[inline]
+    pub fn get_right_mut(&mut self) -> &mut Border {
+        &mut self.right_border
+    }
+
+    #[inline]
+    pub fn set_right(&mut self, value: Border) -> &mut Self {
+        self.right_border = value;
+        self
+    }
+
+    #[inline]
+    pub fn get_top_border(&self) -> &Border {
+        &self.top_border
+    }
+
+    #[inline]
+    pub fn get_top_border_mut(&mut self) -> &mut Border {
+        &mut self.top_border
+    }
+
+    #[inline]
+    pub fn set_top_border(&mut self, value: Border) -> &mut Self {
+        self.top_border = value;
+        self
+    }
+
+    #[inline]
+    pub fn get_top(&self) -> &Border {
+        &self.top_border
+    }
+
+    #[inline]
+    pub fn get_top_mut(&mut self) -> &mut Border {
+        &mut self.top_border
+    }
+
+    #[inline]
+    pub fn set_top(&mut self, value: Border) -> &mut Self {
+        self.top_border = value;
+        self
+    }
+
+    #[inline]
+    pub fn get_bottom_border(&self) -> &Border {
+        &self.bottom_border
+    }
+
+    #[inline]
+    pub fn get_bottom_border_mut(&mut self) -> &mut Border {
+        &mut self.bottom_border
+    }
+
+    #[inline]
+    pub fn set_bottom_border(&mut self, value: Border) -> &mut Self {
+        self.bottom_border = value;
+        self
+    }
+
+    #[inline]
+    pub fn get_bottom(&self) -> &Border {
+        &self.bottom_border
+    }
+
+    #[inline]
+    pub fn get_bottom_mut(&mut self) -> &mut Border {
+        &mut self.bottom_border
+    }
+
+    #[inline]
+    pub fn set_bottom(&mut self, value: Border) -> &mut Self {
+        self.bottom_border = value;
+        self
+    }
+
+    #[inline]
+    pub fn get_diagonal_border(&self) -> &Border {
+        &self.diagonal_border
+    }
+
+    #[inline]
+    pub fn get_diagonal_border_mut(&mut self) -> &mut Border {
+        &mut self.diagonal_border
+    }
+
+    #[inline]
+    pub fn set_diagonal_border(&mut self, value: Border) -> &mut Self {
+        self.diagonal_border = value;
+        self
+    }
+
+    #[inline]
+    pub fn get_diagonal(&self) -> &Border {
+        &self.diagonal_border
+    }
+
+    #[inline]
+    pub fn get_diagonal_mut(&mut self) -> &mut Border {
+        &mut self.diagonal_border
+    }
+
+    #[inline]
+    pub fn set_diagonal(&mut self, value: Border) -> &mut Self {
+        self.diagonal_border = value;
+        self
+    }
+
+    #[inline]
+    pub fn get_vertical_border(&self) -> &Border {
+        &self.vertical_border
+    }
+
+    #[inline]
+    pub fn get_vertical_border_mut(&mut self) -> &mut Border {
+        &mut self.vertical_border
+    }
+
+    #[inline]
+    pub fn set_vertical_border(&mut self, value: Border) -> &mut Self {
+        self.vertical_border = value;
+        self
+    }
+
+    #[inline]
+    pub fn get_horizontal_border(&self) -> &Border {
+        &self.horizontal_border
+    }
+
+    #[inline]
+    pub fn get_horizontal_border_mut(&mut self) -> &mut Border {
+        &mut self.horizontal_border
+    }
+
+    #[inline]
+    pub fn set_horizontal_border(&mut self, value: Border) -> &mut Self {
+        self.horizontal_border = value;
+        self
+    }
+
+    #[inline]
+    pub fn get_diagonal_down(&self) -> &bool {
+        self.diagonal_down.get_value()
+    }
+
+    #[inline]
+    pub fn set_diagonal_down(&mut self, value: bool) {
+        self.diagonal_down.set_value(value);
+    }
+
+    #[inline]
+    pub fn get_diagonal_up(&self) -> &bool {
+        self.diagonal_up.get_value()
+    }
+
+    #[inline]
+    pub fn set_diagonal_up(&mut self, value: bool) {
+        self.diagonal_up.set_value(value);
+    }
+
+    #[inline]
+    pub(crate) fn get_default_value() -> Self {
+        Self::default()
+    }
+
+    #[inline]
+    pub(crate) fn get_hash_code(&self) -> String {
+        format!(
+            "{:x}",
+            md5::Md5::digest(format!(
+                "{}{}{}{}{}{}{}{}{}",
+                &self.get_left_border().get_hash_code(),
+                &self.get_right_border().get_hash_code(),
+                &self.get_top_border().get_hash_code(),
+                &self.get_bottom_border().get_hash_code(),
+                &self.get_diagonal_border().get_hash_code(),
+                &self.get_vertical_border().get_hash_code(),
+                &self.get_horizontal_border().get_hash_code(),
+                &self.diagonal_down.get_value_string(),
+                &self.diagonal_up.get_value_string()
+            ))
+        )
+    }
+
+    // When opened in software such as Excel, it is visually blank.
+    #[inline]
+    pub(crate) fn is_visually_empty(&self) -> bool {
+        self.left_border.is_visually_empty()
+            || self.right_border.is_visually_empty()
+            || self.top_border.is_visually_empty()
+            || self.bottom_border.is_visually_empty()
+            || self.diagonal_border.is_visually_empty()
+            || self.vertical_border.is_visually_empty()
+            || self.horizontal_border.is_visually_empty()
+    }
+
+    pub(crate) fn set_attributes<R: std::io::BufRead>(
+        &mut self,
+        reader: &mut Reader<R>,
+        e: &BytesStart,
+    ) {
+        set_string_from_xml!(self, e, diagonal_up, "diagonalUp");
+        set_string_from_xml!(self, e, diagonal_down, "diagonalDown");
+
+        xml_read_loop!(
+            reader,
+            Event::Empty(ref e) => {
+                match e.name().into_inner() {
+                    b"left" => {
+                        self.left_border.set_attributes(reader, e, true);
+                    }
+                    b"right" => {
+                        self.right_border.set_attributes(reader, e, true);
+                    }
+                    b"top" => {
+                        self.top_border.set_attributes(reader, e, true);
+                    }
+                    b"bottom" => {
+                        self.bottom_border.set_attributes(reader, e, true);
+                    }
+                    b"diagonal" => {
+                        self.diagonal_border.set_attributes(reader, e, true);
+                    }
+                    b"vertical" => {
+                        self.vertical_border.set_attributes(reader, e, true);
+                    }
+                    b"horizontal" => {
+                        self.horizontal_border.set_attributes(reader, e, true);
+                    }
+                    _ => (),
+                }
+            },
+            Event::Start(ref e) => {
+                match e.name().into_inner() {
+                    b"left" => {
+                        self.left_border.set_attributes(reader, e, false);
+                    }
+                    b"right" => {
+                        self.right_border.set_attributes(reader, e, false);
+                    }
+                    b"top" => {
+                        self.top_border.set_attributes(reader, e, false);
+                    }
+                    b"bottom" => {
+                        self.bottom_border.set_attributes(reader, e, false);
+                    }
+                    b"diagonal" => {
+                        self.diagonal_border.set_attributes(reader, e, false);
+                    }
+                    b"vertical" => {
+                        self.vertical_border.set_attributes(reader, e, false);
+                    }
+                    b"horizontal" => {
+                        self.horizontal_border.set_attributes(reader, e, false);
+                    }
+                    _ => (),
+                }
+            },
+            Event::End(ref e) => {
+                if e.name().into_inner() == b"border" {
+                    return
+                }
+            },
+            Event::Eof => panic!("Error: Could not find {} end element", "border")
+        );
+    }
+
+    pub(crate) fn write_to(&self, writer: &mut Writer<Cursor<Vec<u8>>>) {
+        // border
+        let mut attributes: Vec<(&str, &str)> = Vec::new();
+        if self.diagonal_up.has_value() {
+            attributes.push(("diagonalUp", self.diagonal_up.get_value_string()));
+        }
+        if self.diagonal_down.has_value() {
+            attributes.push(("diagonalDown", self.diagonal_down.get_value_string()));
+        }
+        write_start_tag(writer, "border", attributes, false);
+
+        // left
+        self.left_border.write_to_left(writer);
+
+        // right
+        self.right_border.write_to_right(writer);
+
+        // top
+        self.top_border.write_to_top(writer);
+
+        // bottom
+        self.bottom_border.write_to_bottom(writer);
+
+        // diagonal
+        self.diagonal_border.write_to_diagonal(writer);
+
+        // vertical
+        if self.vertical_border.get_hash_code() != Border::default().get_hash_code() {
+            self.vertical_border.write_to_vertical(writer);
+        }
+
+        // horizontal
+        if self.horizontal_border.get_hash_code() != Border::default().get_hash_code() {
+            self.horizontal_border.write_to_horizontal(writer);
+        }
+
+        write_end_tag(writer, "border");
+    }
+}

@@ -11,5 +11,8 @@ iced_aw = "0.13.1"
 ndarray = "0.17.2"
 regex = "1.12.3"
 rfd = "0.17.2"
-umya-spreadsheet = "2.3.3"
+umya-spreadsheet = { version = "2.3.3", path = "umya-spreadsheet" }
 unaccent = "0.1.1"
+
+[workspace]
+members = ["umya-spreadsheet"]

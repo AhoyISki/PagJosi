@@ -1,0 +1,41 @@
+[package]
+name = "umya-spreadsheet"
+version = "2.3.3"
+authors = ["MathNya <umya.net.info@gmail.com>"]
+repository = "https://github.com/MathNya/umya-spreadsheet"
+keywords = ["excel", "spreadsheet", "xlsx", "reader", "writer"]
+license = "MIT"
+readme = "README.md"
+description = "umya-spreadsheet is a library written in pure Rust to read and write xlsx file."
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+aes = "0.8.4"
+ahash = "0.8.11"
+base64 = "0.22.1"
+byteorder = "1.5"
+cbc = "0.1.2"
+cfb = "0.10.0"
+chrono = { version = "0.4.38", default-features = false, features = ["clock"] }
+encoding_rs = "0.8.35"
+fancy-regex = "0.14.0"
+getrandom = { version = "0.2.15" }
+hmac = "0.12.1"
+html_parser = "0.7.0"
+imagesize = "0.14"
+lazy_static = "1.5.0"
+md-5 = "0.10.6"
+regex = "1.11.1"
+sha2 = "0.10.8"
+thin-vec = "0.2.13"
+thousands = "0.2.0"
+quick-xml = { version = "0.37.1", features = ["serialize"] }
+zip = { version = "2.2.1", default-features = false, features = ["deflate"] }
+
+[lib]
+doctest = false
+
+[features]
+js = ["getrandom/js"]
