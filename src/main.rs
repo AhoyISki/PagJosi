@@ -737,13 +737,25 @@ fn add_to_sheet(
                     .set_style(complement_style.clone());
             }
 
-            for cell in ["G3", "H3", "H4", "H5"] {
+            for cell in [
+                "B3", "C3", "D3", "E3", "F3", "B4", "C4", "D4", "E4", "F4", "G4",
+            ] {
+                sheet.get_cell_mut(cell).set_style(complement_style.clone());
+            }
+
+            for cell in ["G3", "H3", "H4"] {
                 sheet
                     .get_cell_mut(cell)
                     .set_style(complement_style.clone())
                     .get_style_mut()
                     .set_number_format(BRL_FMT.clone());
             }
+
+            sheet
+                .get_cell_mut("H5")
+                .set_style(footer_style.clone())
+                .get_style_mut()
+                .set_number_format(BRL_FMT.clone());
 
             *already_added
                 .entry(key)
